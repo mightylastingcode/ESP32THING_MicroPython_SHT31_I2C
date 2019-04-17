@@ -93,6 +93,16 @@ class SHT31_Sensor:
 				#print ("i=%d crc = %x" % (i, crc))
 		return crc
 
+'''
+# place this section in the main.py.
+
+import machine
+import sys
+import utime
+from machine import Pin, I2C
+
+from sht31 import SHT31_Sensor
+
 # Pin definitions
 repl_button = machine.Pin(0, machine.Pin.IN, machine.Pin.PULL_UP)
 
@@ -114,3 +124,4 @@ while True:
 
     # Do nothing
     utime.sleep_ms(10)
+'''
