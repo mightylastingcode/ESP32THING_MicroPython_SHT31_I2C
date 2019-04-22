@@ -1,23 +1,35 @@
 import machine
 import sys
 import utime
+import ubinascii
+
 from machine import Pin, I2C
 from sht31 import SHT31_Sensor
-
 from umqtt.simple import MQTTClient
 
-# Pin definitions
-repl_button = machine.Pin(0, machine.Pin.IN, machine.Pin.PULL_UP)
 
+# default MQTT setting
+#SERVER =  "iot.eclipse.org"
+SERVER =  "mosquitto.org"
+CLIENTID = ubinascii.hexlify(machine.unique_id());
+TOPIC = b"xyzabc/fahrenheit"
 
-def main(clientID = "umqtt_client", server = "mosquitto.org", temp=75):
+def main(clientID = CLIENTID, server = SERVER, temp=0, topic = TOPIC):
+	print ("Client ID: %s" % clientID)
+	print ("MQTT broker server: %s" % server)
+	print ("Topic: %s" % topic)
+	print ("Temperature F: %d" % temp)
 	c = MQTTClient(clientID, server)
 	print ('client connect status :')
 	print(c.connect())
 	c.publish(b"xyzabc/fahrenheit", str(temp))
 	c.disconnect()
 
+# Module name
 print ("Python name : %s." % __name__)
+
+# Pin definitions
+repl_button = machine.Pin(0, machine.Pin.IN, machine.Pin.PULL_UP)
 
 if __name__ == "__main__":
 	print ("SHT31 I2C Example")
@@ -26,8 +38,7 @@ if __name__ == "__main__":
 	print (measure_data)
 	measure_data = sht31.read_temp_humd()
 	print (measure_data)
-	main(clientID = '1234',temp=measure_data[0])
-
+	main(temp=measure_data[0])
 
 # Wait for button 0 to be pressed, and then exit
 while True:
