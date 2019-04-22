@@ -4,26 +4,30 @@ import utime
 from machine import Pin, I2C
 from sht31 import SHT31_Sensor
 
+from umqtt.simple import MQTTClient
+
 # Pin definitions
 repl_button = machine.Pin(0, machine.Pin.IN, machine.Pin.PULL_UP)
 
-print ("SHT31 I2C Example")
 
-sht31 = SHT31_Sensor(freq = 100000,sdapin = 21, sclpin = 22)
-measure_data = sht31.read_temp_humd()
-print (measure_data)
-measure_data = sht31.read_temp_humd(fahreheit = False)
-print (measure_data)
+def main(clientID = "umqtt_client", server = "mosquitto.org"):
+	c = MQTTClient(clientID, server)
+	print ('client connect status :')
+	print(c.connect())
+	c.publish(b"xyzabc/fahrenheit", b"72")
+	c.disconnect()
 
-from umqtt.simple import MQTTClient
+print ("Python name : %s." % __name__)
 
-print ('connecting to an online broker')
-client = MQTTClient('<Unique ID','<Broker Address>')
+if __name__ == "__main__":
+	print ("SHT31 I2C Example")
+	sht31 = SHT31_Sensor(freq = 100000,sdapin = 21, sclpin = 22)
+	measure_data = sht31.read_temp_humd()
+	print (measure_data)
+	measure_data = sht31.read_temp_humd(fahreheit = False)
+	print (measure_data)
+	main(clientID = '1234')
 
-print ('client connect status :')
-print(client.connect())
-print ("publish : 'xyzabc/fahrenheit', '72'")
-client.publish('xyzabc/fahrenheit', '72')
 
 # Wait for button 0 to be pressed, and then exit
 while True:
