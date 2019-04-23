@@ -26,18 +26,27 @@ blueledstate = 0
 
 # default MQTT setting
 #SERVER =  "iot.eclipse.org"
-SERVER =  "mosquitto.org"
-CLIENTID = ubinascii.hexlify(machine.unique_id());
-TOPIC = b"xyzabc/fahrenheit"
+#SERVER =  "mqtt.mediumone.com"
 
-BUTTON_TOPIC = b"xyzabc/led"
+SERVER 		= "mosquitto.org"
+CLIENTID 	= ubinascii.hexlify(machine.unique_id());
+PUB_TOPIC 	= b"xyzabc/fahrenheit"
+SUB_TOPIC 	= b"xyzabc/led"
+PORT 		= 1883
+MQTT_USERNAME = None
+MQTT_password = None
+
+
+
+
+SUB_TOPIC = b"xyzabc/led"
 def sub_cb(topic, msg):	
 	global msg_rec_count
 	global blueledstate
 	print ((topic,msg))
 	msg_rec_count = msg_rec_count + 1
 	print ("Message counter value: %d" % msg_rec_count)
-	if topic == BUTTON_TOPIC:
+	if topic == SUB_TOPIC:
 		if msg == b"1":
 			print ("turn on led")
 			blueledstate = 1
@@ -55,12 +64,12 @@ def sub_cb(topic, msg):
 				blueledstate = 0
 				blueled.value(0)
 
-def main(clientID = CLIENTID, server = SERVER, temp=0, topic = TOPIC):
+def main(clientID = CLIENTID, server = SERVER, temp=0, topic = PUB_TOPIC):
 	print ("Client ID: %s" % clientID)
 	print ("MQTT broker server: %s" % server)
 	print ("Topic: %s" % topic)
 	print ("Temperature F: %d" % temp)
-	c = MQTTClient(clientID, server)
+	c = MQTTClient(clientID, server, PORT, MQTT_USERNAME, MQTT_password)
 	c.set_callback(sub_cb)
 	if c.connect() == 0:
 		print('cCient connect status : Success')	
@@ -68,8 +77,8 @@ def main(clientID = CLIENTID, server = SERVER, temp=0, topic = TOPIC):
 		print ('Client connect status : Failure')
 	print('Publish data to the broker.')
 	c.publish(topic, str(temp))
-	print('subscribe topic (%s)' % BUTTON_TOPIC)
-	c.subscribe(BUTTON_TOPIC)
+	print('subscribe topic (%s)' % SUB_TOPIC)
+	c.subscribe(SUB_TOPIC)
 	while msg_rec_count < 4:
 		if True:
 			print ('Waiting for subscribe message')			
