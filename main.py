@@ -1,3 +1,16 @@
+'''
+
+Author: Michael Li
+Date: 4/25/2019
+
+Example: MQTT Publish & Subscribe 
+		1. Publish temperature in F from SHT31 sensor
+		2. Scuscribe LED switch command (0,1,2) from the server.
+		     0 - off, 1 - on, 2 - toggle
+
+'''
+
+
 import machine
 import sys
 import utime
@@ -8,7 +21,8 @@ from sht31 import SHT31_Sensor
 from umqtt.simple import MQTTClient
 
 
-msg_rec_flag = False
+msg_rec_count = 0
+blueledstate = 0
 
 # default MQTT setting
 #SERVER =  "iot.eclipse.org"
@@ -16,12 +30,30 @@ SERVER =  "mosquitto.org"
 CLIENTID = ubinascii.hexlify(machine.unique_id());
 TOPIC = b"xyzabc/fahrenheit"
 
+BUTTON_TOPIC = b"xyzabc/led"
 def sub_cb(topic, msg):	
-	global msg_rec_flag
+	global msg_rec_count
+	global blueledstate
 	print ((topic,msg))
-	msg_rec_flag = True
-	print (msg_rec_flag)
-
+	msg_rec_count = msg_rec_count + 1
+	print ("Message counter value: %d" % msg_rec_count)
+	if topic == BUTTON_TOPIC:
+		if msg == b"1":
+			print ("turn on led")
+			blueledstate = 1
+			blueled.value(1)
+		elif msg == b"0":
+			print ("turn off led")
+			blueledstate = 0
+			blueled.value(0)
+		elif msg == b"2":	
+			print ("toggle led")		
+			if blueledstate == 0:
+				blueledstate = 1
+				blueled.value(1)
+			else:				
+				blueledstate = 0
+				blueled.value(0)
 
 def main(clientID = CLIENTID, server = SERVER, temp=0, topic = TOPIC):
 	print ("Client ID: %s" % clientID)
@@ -36,12 +68,11 @@ def main(clientID = CLIENTID, server = SERVER, temp=0, topic = TOPIC):
 		print ('Client connect status : Failure')
 	print('Publish data to the broker.')
 	c.publish(topic, str(temp))
-	print('subscribe topic (%s)' % topic)
-	c.subscribe(topic)
-	while not msg_rec_flag:
+	print('subscribe topic (%s)' % BUTTON_TOPIC)
+	c.subscribe(BUTTON_TOPIC)
+	while msg_rec_count < 4:
 		if True:
-			print ('Waiting for subscribe message')
-			print (msg_rec_flag)
+			print ('Waiting for subscribe message')			
 			# blocking wait for message
 			c.wait_msg()
 		else:
@@ -57,6 +88,7 @@ print ("Python name : %s." % __name__)
 
 # Pin definitions
 repl_button = machine.Pin(0, machine.Pin.IN, machine.Pin.PULL_UP)
+blueled = machine.Pin(5, machine.Pin.OUT)
 
 if __name__ == "__main__":
 	print ("SHT31 I2C Example")
