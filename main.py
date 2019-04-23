@@ -8,11 +8,20 @@ from sht31 import SHT31_Sensor
 from umqtt.simple import MQTTClient
 
 
+msg_rec_flag = False
+
 # default MQTT setting
 #SERVER =  "iot.eclipse.org"
 SERVER =  "mosquitto.org"
 CLIENTID = ubinascii.hexlify(machine.unique_id());
 TOPIC = b"xyzabc/fahrenheit"
+
+def sub_cb(topic, msg):	
+	global msg_rec_flag
+	print ((topic,msg))
+	msg_rec_flag = True
+	print (msg_rec_flag)
+
 
 def main(clientID = CLIENTID, server = SERVER, temp=0, topic = TOPIC):
 	print ("Client ID: %s" % clientID)
@@ -20,9 +29,27 @@ def main(clientID = CLIENTID, server = SERVER, temp=0, topic = TOPIC):
 	print ("Topic: %s" % topic)
 	print ("Temperature F: %d" % temp)
 	c = MQTTClient(clientID, server)
-	print ('client connect status :')
-	print(c.connect())
-	c.publish(b"xyzabc/fahrenheit", str(temp))
+	c.set_callback(sub_cb)
+	if c.connect() == 0:
+		print('cCient connect status : Success')	
+	else:
+		print ('Client connect status : Failure')
+	print('Publish data to the broker.')
+	c.publish(topic, str(temp))
+	print('subscribe topic (%s)' % topic)
+	c.subscribe(topic)
+	while not msg_rec_flag:
+		if True:
+			print ('Waiting for subscribe message')
+			print (msg_rec_flag)
+			# blocking wait for message
+			c.wait_msg()
+		else:
+			# non blocking wait for message
+			print ('Waiting for subscribe message')
+			c_check_msg()
+			time.sleep(1)			
+	print ('Client disconnect')			
 	c.disconnect()
 
 # Module name
@@ -38,6 +65,7 @@ if __name__ == "__main__":
 	print (measure_data)
 	measure_data = sht31.read_temp_humd()
 	print (measure_data)
+	##main(clientID = '52dc166c-2de7-43c1-88ff-f80211c7a8f6',temp=measure_data[0])
 	main(temp=measure_data[0])
 
 # Wait for button 0 to be pressed, and then exit
